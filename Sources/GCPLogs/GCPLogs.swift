@@ -2,6 +2,19 @@
 // https://docs.swift.org/swift-book
 import SwiftUI
 
+
+struct configData{
+    var gcpURL: String
+}
+
+
+public class ConfigInstance{
+    public static let shared = ConfigInstance()
+    private init(){}
+    
+    public static var gcpData: GCPConfig?
+}
+
 public class GCPLogs: NSObject{
     @available(iOS 13.0.0, *)
     public static func save(config: GCPConfig,logData: [String: Any]) async throws{
