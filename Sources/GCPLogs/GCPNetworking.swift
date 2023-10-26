@@ -8,9 +8,9 @@
 import Foundation
 
 
-class Networking{
+class GCPNetworking{
     
-    static let shared = Networking()
+    static let shared = GCPNetworking()
     
     private init(){}
     
