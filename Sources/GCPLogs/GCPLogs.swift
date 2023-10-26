@@ -12,7 +12,7 @@ public class ConfigInstance{
     public static let shared = ConfigInstance()
     private init(){}
     
-    public static var gcpData: GCPConfig?
+    public var gcpData: GCPConfig?
 }
 
 public class GCPLogs: NSObject{
