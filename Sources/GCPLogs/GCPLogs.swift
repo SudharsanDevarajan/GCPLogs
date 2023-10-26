@@ -1,8 +1,8 @@
 // The Swift Programming Language
 // https://docs.swift.org/swift-book
+import SwiftUI
 
-
-public class GCPLogs{
+public class GCPLogs: NSObject{
     @available(iOS 13.0.0, *)
     public static func save(config: GCPConfigure,jsonPayload: [String: Any], forToken: String) async throws{
         let params : [String:Any] = [
@@ -33,10 +33,14 @@ public class GCPLogs{
 }
 
 
-public struct GCPConfigure{
+public class GCPConfigure{
     let gcpUrl: String
     let projectID: String
-    let logType: LogType
+    
+    public init(gcpUrl: String, projectID: String) {
+        self.gcpUrl = gcpUrl
+        self.projectID = projectID
+    }
 }
 
 
