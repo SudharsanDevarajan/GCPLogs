@@ -4,7 +4,7 @@ import SwiftUI
 
 public class GCPLogs: NSObject{
     @available(iOS 13.0.0, *)
-    public static func save(config: GCPConfigure,jsonPayload: [String: Any], forToken: String) async throws{
+    public static func save(config: GCPConfig,logData: [String: Any]) async throws{
         let params : [String:Any] = [
             "entries": [
                 [
@@ -18,14 +18,13 @@ public class GCPLogs: NSObject{
                         "type": "gce_instance"
                     ],
                     "severity": "INFO",
-                    "jsonPayload": jsonPayload
+                    "jsonPayload": logData
                 ]
             ],
             "logName": "projects/\(config.projectID)/logs/my-test-log"
         ]
-        
         do{
-            try await Networking.shared.logData(config.gcpUrl, params, forToken)
+            try await Networking.shared.logData(config.gcpUrl, config.gcpToken, params)
         }catch{
             throw error
         }
@@ -33,12 +32,14 @@ public class GCPLogs: NSObject{
 }
 
 
-public class GCPConfigure{
+public class GCPConfig{
     let gcpUrl: String
+    let gcpToken: String
     let projectID: String
     
-    public init(gcpUrl: String, projectID: String) {
+    public init(gcpUrl: String,gcpToken: String, projectID: String) {
         self.gcpUrl = gcpUrl
+        self.gcpToken = gcpToken
         self.projectID = projectID
     }
 }

@@ -15,9 +15,9 @@ class Networking{
     private init(){}
     
     @available(iOS 13.0.0, *)
-    func logData(_ url: String,_ body: [String:Any],_ token: String) async throws{
+    func logData(_ gcpURL: String,_ gcpToken: String,_ logData: [String:Any]) async throws{
         do{
-            let request = try createRequest(url, token, body)
+            let request = try createRequest(gcpURL, gcpToken, logData)
             let (data, _) = try await URLSession.shared.data(for: request)
             let json = try JSONSerialization.jsonObject(with: data)
             print("GCPLogs success \(json)")
@@ -26,7 +26,7 @@ class Networking{
         }catch NetworkingError.invalidRequest{
             throw NetworkingError.invalidRequest
         }catch{
-            throw NetworkingError.gcpLoginFailed
+            throw NetworkingError.failedToLogging
         }
     }
     
@@ -69,5 +69,5 @@ struct HttpMethod{
 enum NetworkingError: Error{
     case invalidURL
     case invalidRequest
-    case gcpLoginFailed
+    case failedToLogging
 }
