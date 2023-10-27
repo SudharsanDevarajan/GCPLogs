@@ -12,62 +12,80 @@ class GCPNetworking{
     
     static let shared = GCPNetworking()
     
-    private init(){}
+    private init() {} // Private initializer to prevent external instantiation
     
-    @available(iOS 13.0.0, *)
-    func logData(_ gcpURL: String,_ gcpToken: String,_ logData: [String:Any]) async throws{
-        do{
-            let request = try createRequest(gcpURL, gcpToken, logData)
-            let (data, _) = try await URLSession.shared.data(for: request)
-            let json = try JSONSerialization.jsonObject(with: data)
-            print("GCPLogs success \(json)")
-        }catch NetworkingError.invalidURL{
-            throw NetworkingError.invalidURL
-        }catch NetworkingError.invalidRequest{
-            throw NetworkingError.invalidRequest
-        }catch{
-            throw NetworkingError.failedToLogging
-        }
+    struct HttpHeader {
+        static var contentTypeKey = "Content-Type"
+        static var contentTypeValue = "application/json"
+        static var auth = "Authorization"
+        static let bearer = "Bearer"
     }
     
-    private func createRequest(_ urlString: String,_ userToken: String, _ body: [String: Any]) throws -> URLRequest{
+    struct GCPError{
+        static let invalidURL = "GCPLogs - Invalid URL"
+        static let  invalidRequest = "GCPLogs - Invalid Request"
+        static let  invalidStatusCode = "GCPLogs - Invalid Status Code"
+        static let  invalidResponse = "GCPLogs - Invalid Response"
+        static let parsingError = "GCPLogs - Error in Parsing response"
+        static let  failedToLogging = "GCPLogs - Failed to Login"
+    }
+
+    struct HttpMethod{
+        static let post = "POST"
+    }
+    
+    func logData(with url: String,token: String, params: [String: Any]) {
         
-        guard let url = URL(string: urlString) else {
-            throw NetworkingError.invalidURL
+        guard let request = createRequest(url, token, params) else{ return }
+        // Create a data task with the request
+        URLSession.shared.dataTask(with: request) { (data, response, error) in
+            if let error = error {
+                print("Error: \(error)")
+                return
+            }
+            
+            // Check if a response was received
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print(GCPError.invalidResponse)
+                return
+            }
+            
+            // Check the status code in the response
+            if httpResponse.statusCode == 200 {
+                if let responseData = data {
+                    do {
+                        let json = try JSONSerialization.jsonObject(with: responseData, options: [])
+                        print("GCPLogs - success: \(json)")
+                    } catch {
+                        print("\(GCPError.parsingError) \(error)")
+                    }
+                } else {
+                    print(GCPError.failedToLogging)
+                }
+            } else {
+                print("\(GCPError.invalidStatusCode) \(httpResponse.statusCode)")
+            }
+        }.resume()
+        
+    }
+    
+    private func createRequest(_ gcpURL: String,_ gcpToken: String, _ logData: [String: Any]) -> URLRequest?{
+        
+        guard let url = URL(string: gcpURL) else {
+            print(GCPError.invalidURL)
+            return nil
         }
         
         var request = URLRequest(url: url)
         request.setValue(HttpHeader.contentTypeValue, forHTTPHeaderField: HttpHeader.contentTypeKey)
-        request.setValue("\(HttpHeader.bearer) \(userToken)", forHTTPHeaderField: HttpHeader.auth)
+        request.setValue("\(HttpHeader.bearer) \(gcpToken)", forHTTPHeaderField: HttpHeader.auth)
         request.httpMethod = HttpMethod.post
         
         do{
-            request.httpBody = try JSONSerialization.data(withJSONObject: body, options: .prettyPrinted)
+            request.httpBody = try JSONSerialization.data(withJSONObject: logData, options: .prettyPrinted)
         }catch{
-            throw NetworkingError.invalidRequest
+            print(GCPError.invalidRequest)
         }
-        
         return request
     }
-}
-
-struct HttpHeader{
-    static let contentTypeKey = "Content-Type"
-    static let contentTypeValue = "application/json"
-    static let auth = "Authorization"
-    static let bearer = "Bearer"
-}
-
-
-struct HttpMethod{
-    static let get = "GET"
-    static let post = "POST"
-    static let put = "PUT"
-}
-
-
-enum NetworkingError: Error{
-    case invalidURL
-    case invalidRequest
-    case failedToLogging
 }

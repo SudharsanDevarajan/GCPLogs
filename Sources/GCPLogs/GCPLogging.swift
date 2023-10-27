@@ -4,13 +4,15 @@ import Foundation
 
 public class GCPLogging: NSObject{
     
-    @available(iOS 13.0.0, *)
-    public static func save(logData: [String: Any]) async throws{
-        let params = gcpParams(projcetId: GCPLogConfig.shared.projectID, logData: logData)
-        do{
-            try await GCPNetworking.shared.logData(GCPLogConfig.shared.gcpURL, GCPLogConfig.shared.gcpToken, params)
-        }catch{
-            throw error
+    public static func save(logData: [String: Any]) {
+        if GCPLogConfig.shared.gcpURL != "" && GCPLogConfig.shared.gcpURL != "" && GCPLogConfig.shared.projectID != ""{
+            let param = gcpParams(projcetId: GCPLogConfig.shared.projectID, logData: logData)
+            
+            DispatchQueue(label: "com.gcp.logging", qos: .background).async {
+                GCPNetworking.shared.logData(with: GCPLogConfig.shared.gcpURL, token: GCPLogConfig.shared.gcpToken, params: param)
+            }
+        }else{
+            print("GCPLogs - Configuration Missing")
         }
     }
     
@@ -36,8 +38,3 @@ public class GCPLogging: NSObject{
     }
 }
 
-enum LogType{
-    case request
-    case response
-    case other(detail: String)
-}
